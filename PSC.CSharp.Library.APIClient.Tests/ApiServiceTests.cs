@@ -254,7 +254,7 @@ namespace PSC.CSharp.Library.APIClient.Tests
             mockHandler.Protected().Verify(
                 "SendAsync",
                 Times.Exactly(1),
-                ItExpr.Is<HttpRequestMessage>(m => m.Method == HttpMethod.Post),
+                ItExpr.Is<HttpRequestMessage>(m => m.Method == HttpMethod.Put),
                 ItExpr.IsAny<CancellationToken>());
 
             // validate the logs
