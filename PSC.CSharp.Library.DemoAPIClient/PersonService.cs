@@ -24,7 +24,7 @@ namespace PSC.CSharp.Library.DemoAPIClient
 
         public async Task<ApiResponse<UpdatePersonResponse>>? AddPerson(PersonModel person)
         {
-            return await Put<PersonModel, UpdatePersonResponse>(person);
+            return await Post<PersonModel, UpdatePersonResponse>(person);
         }
 
         public async Task<ApiResponse<UpdatePersonResponse>>? UpdatePerson(string id, PersonModel person)

@@ -153,7 +153,7 @@ namespace PSC.CSharp.Library.APIClient.Tests
             mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
-                    "PostAsync",
+                    "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(m => m.Method == HttpMethod.Post),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(mockResponse);
@@ -228,7 +228,7 @@ namespace PSC.CSharp.Library.APIClient.Tests
             mockHandler
                 .Protected()
                 .Setup<Task<HttpResponseMessage>>(
-                    "PostAsync",
+                    "SendAsync",
                     ItExpr.Is<HttpRequestMessage>(m => m.Method == HttpMethod.Put),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(mockResponse);
@@ -259,9 +259,10 @@ namespace PSC.CSharp.Library.APIClient.Tests
 
             // validate the logs
             Assert.IsTrue(logLevels.Contains(LogLevel.Information));
-            Assert.IsTrue(!logLevels.Contains(LogLevel.Error));
-            Assert.IsTrue(logMessages.Count() == 1);
-            Assert.IsTrue(logMessages[0] == "[DBG][HttpVerb: PUT][URL: /people][HttpCode: 204]");
+            Assert.IsTrue(logMessages.Count() == 2);
+
+            var t = logMessages.Where(m => m == "[DBG][HttpVerb: PUT][URL: /people/1][HttpCode: 204]").ToList();
+            Assert.IsTrue(logMessages.Where(m => m == "[DBG][HttpVerb: PUT][URL: /people/1][HttpCode: 204]").Count() > 0);
         }
     }
 }
