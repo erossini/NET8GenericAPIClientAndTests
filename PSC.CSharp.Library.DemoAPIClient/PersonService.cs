@@ -5,7 +5,7 @@ using PSC.CSharp.Library.DemoAPIClient.Models.Person.Responses;
 
 namespace PSC.CSharp.Library.DemoAPIClient
 {
-    public class PersonService : ApiService
+    public class PersonService : ApiService, IPersonService
     {
         public PersonService(HttpClient clientFactory, ILogger logger) :
             base("/people", clientFactory, logger)
