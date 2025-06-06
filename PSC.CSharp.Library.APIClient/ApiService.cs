@@ -280,6 +280,19 @@ namespace PSC.CSharp.Library.APIClient
         }
 
         /// <summary>
+        /// Sets the tag.
+        /// </summary>
+        /// <param name="start">The start.</param>
+        /// <param name="end">The end.</param>
+        public void SetTag(string start = "", string end = "")
+        {
+            if(!string.IsNullOrEmpty(start))
+                _tagStart = start;
+            if(!string.IsNullOrEmpty(end))
+                _tagEnd = end;
+        }
+
+        /// <summary>
         /// Sends the request.
         /// </summary>
         /// <typeparam name="TResponse">The type of the t response.</typeparam>
