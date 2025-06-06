@@ -1,6 +1,8 @@
-﻿using PSC.CSharp.Library.APIClient.Interfaces;
+﻿using Microsoft.Extensions.Options;
+using PSC.CSharp.Library.APIClient.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -35,7 +37,19 @@ namespace PSC.CSharp.Library.APIClient
         /// The logger
         /// </summary>
         private ILogger? logger;
+
+        /// <summary>
+        /// The tag start
+        /// </summary>
+        private string _tagStart = "[";
+
+        /// <summary>
+        /// The tag end
+        /// </summary>
+        private string _tagEnd = "]";
+
         #endregion Variables
+
         #region Constructors
 
         /// <summary>
@@ -81,7 +95,9 @@ namespace PSC.CSharp.Library.APIClient
                 throw new ArgumentNullException(nameof(baseUrl));
         }
 
-        #endregion
+        #endregion Constructors
+
+        #region GET
 
         /// <summary>
         /// Gets this instance.
@@ -128,65 +144,12 @@ namespace PSC.CSharp.Library.APIClient
                 return new ApiResponse<TResponse>() { Success = false, ErrorMessage = "Url non valid" };
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
-            HttpResponseMessage responseMessage = await httpClient.SendAsync(request);
 
-            try
-            {
-                responseMessage.EnsureSuccessStatusCode();
-
-                if (!responseMessage.IsSuccessStatusCode)
-                {
-                    WriteLog("GET", url.ToString(), "", responseMessage.StatusCode, null);
-                    return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-                }
-            }
-            catch (HttpRequestException hex)
-            {
-                string hexText = string.Empty;
-                TResponse rslHexText = default!;
-
-                try
-                {
-                    hexText = await responseMessage.Content.ReadAsStringAsync();
-                    rslHexText = await responseMessage.Content.ReadFromJsonAsync<TResponse>();
-                }
-                catch (Exception ex)
-                {
-                    WriteLog("GET", url.ToString(), "", responseMessage.StatusCode, ex,
-                        description: "HttpRequestException Json Conversion");
-                }
-
-                WriteLog("GET", url.ToString(), "", responseMessage.StatusCode, hex, true, hexText);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode, Data = rslHexText };
-            }
-            catch (TaskCanceledException tex)
-            {
-                WriteLog("GET", url.ToString(), "", responseMessage.StatusCode, tex);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-            }
-            catch (Exception ex)
-            {
-                WriteLog("GET", url.ToString(), "", responseMessage.StatusCode, ex);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-            }
-
-            TResponse rsl = default!;
-            try
-            {
-                if (responseMessage?.Content != null)
-                {
-                    string json = await responseMessage.Content.ReadAsStringAsync();
-                    rsl = JsonSerializer.Deserialize<TResponse>(json, options);
-                }
-            }
-            catch (Exception ex)
-            {
-                WriteLog("GET", url.ToString(), "Json Conversion", responseMessage.StatusCode, ex);
-            }
-
-            WriteLog("GET", url.ToString(), "", responseMessage.StatusCode, null, level: LogLevel.Information);
-            return new ApiResponse<TResponse>() { Success = true, Data = rsl, HttpStatusCode = (int)responseMessage.StatusCode };
+            return await SendRequest<TResponse>(request, url, "GET");
         }
+
+        #endregion GET
+        #region Patch 
 
         /// <summary>
         /// Patches the specified payload.
@@ -231,62 +194,11 @@ namespace PSC.CSharp.Library.APIClient
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             request.Content = content;
 
-            responseMessage = await httpClient?.SendAsync(request);
-
-            try
-            {
-                responseMessage.EnsureSuccessStatusCode();
-
-                if (!responseMessage.IsSuccessStatusCode)
-                {
-                    WriteLog("PATCH", url.ToString(), "", responseMessage.StatusCode, null);
-                    return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-                }
-            }
-            catch (HttpRequestException hex)
-            {
-                string hexText = string.Empty;
-                TResponse rslHexText = default!;
-
-                try
-                {
-                    hexText = await responseMessage.Content.ReadAsStringAsync();
-                    rslHexText = await responseMessage.Content.ReadFromJsonAsync<TResponse>();
-                }
-                catch (Exception ex)
-                {
-                    WriteLog("PATCH", url.ToString(), "", responseMessage.StatusCode, ex,
-                        description: "HttpRequestException Json Conversion");
-                }
-
-                WriteLog("PATCH", url.ToString(), "", responseMessage.StatusCode, hex, true, hexText);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode, Data = rslHexText };
-            }
-            catch (TaskCanceledException tex)
-            {
-                WriteLog("PATCH", url.ToString(), "", responseMessage.StatusCode, tex);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-            }
-            catch (Exception ex)
-            {
-                WriteLog("PATCH", url.ToString(), "", responseMessage.StatusCode, ex);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-            }
-
-            TResponse rsl = default!;
-            try
-            {
-                if (responseMessage?.Content != null)
-                    rsl = await responseMessage?.Content?.ReadFromJsonAsync<TResponse>();
-            }
-            catch (Exception ex)
-            {
-                WriteLog("PATCH", url.ToString(), "Json Conversion", responseMessage.StatusCode, ex);
-            }
-
-            WriteLog("PATCH", url.ToString(), "", responseMessage.StatusCode, null, level: LogLevel.Information);
-            return new ApiResponse<TResponse>() { Success = true, Data = rsl, HttpStatusCode = (int)responseMessage.StatusCode };
+            return await SendRequest<TResponse>(request, url, "PATCH");
         }
+
+        #endregion
+        #region POST
 
         /// <summary>
         /// Posts the specified payload.
@@ -318,62 +230,11 @@ namespace PSC.CSharp.Library.APIClient
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             request.Content = content;
 
-            responseMessage = await httpClient.SendAsync(request);
-
-            try
-            {
-                responseMessage.EnsureSuccessStatusCode();
-
-                if (!responseMessage.IsSuccessStatusCode)
-                {
-                    WriteLog("POST", url.ToString(), "", responseMessage.StatusCode, null);
-                    return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-                }
-            }
-            catch (HttpRequestException hex)
-            {
-                string hexText = string.Empty;
-                TResponse rslHexText = default!;
-
-                try
-                {
-                    hexText = await responseMessage.Content.ReadAsStringAsync();
-                    rslHexText = await responseMessage.Content.ReadFromJsonAsync<TResponse>();
-                }
-                catch (Exception ex)
-                {
-                    WriteLog("POST", url.ToString(), "", responseMessage.StatusCode, ex,
-                        description: "HttpRequestException Json Conversion");
-                }
-
-                WriteLog("POST", url.ToString(), "", responseMessage.StatusCode, hex, true, hexText);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode, Data = rslHexText };
-            }
-            catch (TaskCanceledException tex)
-            {
-                WriteLog("POST", url.ToString(), "TaskCancellation", responseMessage.StatusCode, tex);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-            }
-            catch (Exception ex)
-            {
-                WriteLog("POST", url.ToString(), "", responseMessage.StatusCode, ex);
-                return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
-            }
-
-            TResponse rsl = default!;
-            try
-            {
-                if (responseMessage?.Content != null)
-                    rsl = await responseMessage.Content.ReadFromJsonAsync<TResponse>();
-            }
-            catch (Exception ex)
-            {
-                WriteLog("POST", url.ToString(), "Json Conversion", responseMessage.StatusCode, ex);
-            }
-
-            WriteLog("POST", url.ToString(), "", responseMessage.StatusCode, null, level: LogLevel.Information);
-            return new ApiResponse<TResponse>() { Success = true, Data = rsl, HttpStatusCode = (int)responseMessage.StatusCode };
+            return await SendRequest<TResponse>(request, url, "POST");
         }
+
+        #endregion
+        #region PUT
 
         /// <summary>
         /// Puts the specified payload.
@@ -400,15 +261,50 @@ namespace PSC.CSharp.Library.APIClient
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             request.Content = content;
 
-            responseMessage = await httpClient.SendAsync(request);
+            return await SendRequest<TResponse>(request, url, "PUT");
+        }
+
+        #endregion
+
+        #region Common functions
+
+        /// <summary>
+        /// Gets the tag.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        /// <returns></returns>
+        public string GetTag(string key, string value = "")
+        {
+            return $"{_tagStart}{key}{(!string.IsNullOrEmpty(value) ? $": {value}" : "")}{_tagEnd}";
+        }
+
+        /// <summary>
+        /// Sends the request.
+        /// </summary>
+        /// <typeparam name="TResponse">The type of the t response.</typeparam>
+        /// <param name="request">The request.</param>
+        /// <param name="url">The URL.</param>
+        /// <param name="verb">The verb.</param>
+        /// <param name="options">The options.</param>
+        /// <returns>ApiResponse&lt;TResponse&gt;.</returns>
+        private async Task<ApiResponse<TResponse>>? SendRequest<TResponse>(HttpRequestMessage request,
+            string url, string verb, JsonSerializerOptions? options = null)
+            where TResponse : class
+        {
+            HttpResponseMessage responseMessage = null;
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             try
             {
+                responseMessage = await httpClient.SendAsync(request);
                 responseMessage.EnsureSuccessStatusCode();
 
                 if (!responseMessage.IsSuccessStatusCode)
                 {
-                    WriteLog("PUT", url.ToString(), "", responseMessage.StatusCode, null);
+                    stopwatch.Stop();
+                    WriteLog(verb, url.ToString(), "", responseMessage.StatusCode, null, duration: stopwatch.ElapsedMilliseconds);
                     return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
                 }
             }
@@ -424,36 +320,39 @@ namespace PSC.CSharp.Library.APIClient
                 }
                 catch (Exception ex)
                 {
-                    WriteLog("PUT", url.ToString(), "", responseMessage.StatusCode, ex,
+                    WriteLog(verb, url.ToString(), "", responseMessage.StatusCode, ex,
                         description: "HttpRequestException Json Conversion");
                 }
 
-                WriteLog("PUT", url.ToString(), "", responseMessage.StatusCode, hex, true, hexText);
+                WriteLog(verb, url.ToString(), "", responseMessage.StatusCode, hex, true, hexText);
                 return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode, Data = rslHexText };
             }
             catch (TaskCanceledException tex)
             {
-                WriteLog("PUT", url.ToString(), "TaskCancellation", responseMessage.StatusCode, tex);
+                WriteLog(verb, url.ToString(), "", responseMessage.StatusCode, tex);
                 return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
             }
             catch (Exception ex)
             {
-                WriteLog("PUT", url.ToString(), "", responseMessage.StatusCode, ex);
+                WriteLog(verb, url.ToString(), "", responseMessage.StatusCode, ex);
                 return new ApiResponse<TResponse>() { Success = false, HttpStatusCode = (int)responseMessage.StatusCode };
             }
 
             TResponse rsl = default!;
             try
             {
-                if (responseMessage.Content != null)
-                    rsl = await responseMessage?.Content?.ReadFromJsonAsync<TResponse>();
+                if (responseMessage?.Content != null)
+                {
+                    string json = await responseMessage.Content.ReadAsStringAsync();
+                    rsl = JsonSerializer.Deserialize<TResponse>(json, options);
+                }
             }
             catch (Exception ex)
             {
-                WriteLog("PUT", url.ToString(), "Json Conversion", responseMessage.StatusCode, ex);
+                WriteLog(verb, url.ToString(), "Json Conversion", responseMessage.StatusCode, ex);
             }
 
-            WriteLog("PUT", url.ToString(), "", responseMessage.StatusCode, null, level: LogLevel.Information);
+            WriteLog(verb, url.ToString(), "", responseMessage.StatusCode, null, level: LogLevel.Information);
             return new ApiResponse<TResponse>() { Success = true, Data = rsl, HttpStatusCode = (int)responseMessage.StatusCode };
         }
 
@@ -465,37 +364,43 @@ namespace PSC.CSharp.Library.APIClient
         /// <param name="statusCode">The status code.</param>
         /// <param name="ex">The ex.</param>
         /// <param name="isDebug">if set to <c>true</c> [is debug].</param>
-        void WriteLog(string verb, string url, string fnzName, HttpStatusCode statusCode,
+        private void WriteLog(string verb, string url, string fnzName, HttpStatusCode statusCode,
             Exception? ex, bool isDebug = true, string jsonError = null,
-            string description = null,
+            string description = null, long? duration = null,
             LogLevel level = LogLevel.Error)
         {
             if (logger != null)
             {
-                string log = isDebug ? "[DBG]" : "";
-                log = log + $"[HttpVerb: {verb}][URL: {url}]";
-                log = log + (string.IsNullOrEmpty(fnzName) ? "" : $"[Funz: {fnzName}]");
-                log = log + $"[HttpCode: {(int)statusCode}]";
+                string log = isDebug ? GetTag("DBG") : "";
+                log = log + GetTag("HttpVerb", verb) + GetTag("URL", url);
+                log = log + (string.IsNullOrEmpty(fnzName) ? "" : GetTag("Funz", fnzName));
+                log = log + GetTag("HttpCode", ((int)statusCode).ToString());
                 if (!string.IsNullOrEmpty(description))
-                    log = log + $"[Description: {description}]";
+                    log = log + GetTag("Description", description);
+                if (duration != null)
+                    log = log + GetTag("Duration", duration.ToString());
                 if (ex != null)
-                    log = log + $"[Error: {ex.Message}][ErrSource: {ex.Source}][ErrStack: {ex.StackTrace}]";
+                    log = log + GetTag("Error", ex.Message) + GetTag("ErrSource", ex.Source) + GetTag("ErrStack", ex.StackTrace);
                 if (!string.IsNullOrEmpty(jsonError))
-                    log = log + $"[HttpStream: {jsonError}]";
+                    log = log + GetTag("HttpStream", jsonError);
 
                 switch (level)
                 {
                     case LogLevel.Information:
                         logger?.LogInformation(log);
                         break;
+
                     case LogLevel.Warning:
                         logger?.LogWarning(log);
                         break;
+
                     default:
                         logger?.LogError(ex, log);
                         break;
                 }
             }
         }
+
+        #endregion Common functions
     }
 }
