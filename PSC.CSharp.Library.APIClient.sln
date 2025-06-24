@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSC.CSharp.Library.DemoAPIC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSC.CSharp.Library.DemoAPIClient.Models", "PSC.CSharp.Library.DemoAPIClient.Models\PSC.CSharp.Library.DemoAPIClient.Models.csproj", "{DA6E70CC-F0C7-4FB3-93A9-038DE7BD7F55}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSC.CSharp.Library.APIClient.Console.Tests", "PSC.CSharp.Library.APIClient.Console.Tests\PSC.CSharp.Library.APIClient.Console.Tests.csproj", "{8DB91A13-87F3-4728-AEB3-C6D55DD2AA93}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{DA6E70CC-F0C7-4FB3-93A9-038DE7BD7F55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA6E70CC-F0C7-4FB3-93A9-038DE7BD7F55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA6E70CC-F0C7-4FB3-93A9-038DE7BD7F55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DB91A13-87F3-4728-AEB3-C6D55DD2AA93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DB91A13-87F3-4728-AEB3-C6D55DD2AA93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DB91A13-87F3-4728-AEB3-C6D55DD2AA93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DB91A13-87F3-4728-AEB3-C6D55DD2AA93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +61,7 @@ Global
 		{26A2DC31-1220-4ECC-9E77-78B827A190FB} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{D6F09379-6AA6-42FC-A016-0FBDC50E162A} = {D66C9E6A-ACA0-401C-BC7E-FF1FAE47625C}
 		{DA6E70CC-F0C7-4FB3-93A9-038DE7BD7F55} = {D66C9E6A-ACA0-401C-BC7E-FF1FAE47625C}
+		{8DB91A13-87F3-4728-AEB3-C6D55DD2AA93} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {02255D36-4F66-4528-8806-92ED0762E620}

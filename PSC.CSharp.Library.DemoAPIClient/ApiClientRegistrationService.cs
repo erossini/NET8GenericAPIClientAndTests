@@ -20,7 +20,7 @@ namespace PSC.CSharp.Library.DemoAPIClient
         /// <param name="apikey">The apikey.</param>
         /// <param name="baseUrl">The base URL.</param>
         /// <returns>IServiceCollection.</returns>
-        public static IServiceCollection AddIRPApiClientServices(this IServiceCollection services, string apikey, string baseUrl)
+        public static IServiceCollection AddApiClientServices(this IServiceCollection services, string apikey, string baseUrl)
         {
             {
                 services.AddApiService<IPersonService, PersonService>("personApi", baseUrl, apikey);
@@ -38,7 +38,7 @@ namespace PSC.CSharp.Library.DemoAPIClient
         /// <param name="clientName">Name of the client.</param>
         /// <param name="baseUrl">The base URL.</param>
         /// <param name="apiKey">The API key.</param>
-        public static void AddApiService<TInterface, TImplementation>(this IServiceCollection services, 
+        private static void AddApiService<TInterface, TImplementation>(this IServiceCollection services, 
             string clientName, string baseUrl, string apiKey)
             where TImplementation : class, TInterface
             where TInterface : class

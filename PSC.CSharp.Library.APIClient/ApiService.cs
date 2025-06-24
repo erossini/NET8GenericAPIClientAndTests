@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using PSC.CSharp.Library.APIClient.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,11 @@ namespace PSC.CSharp.Library.APIClient
         #region Variables
 
         /// <summary>
+        /// The configuration
+        /// </summary>
+        IConfiguration? configuration;
+
+        /// <summary>
         /// The API key
         /// </summary>
         private string apiKey = string.Empty;
@@ -37,6 +43,11 @@ namespace PSC.CSharp.Library.APIClient
         /// The logger
         /// </summary>
         private ILogger? logger;
+
+        /// <summary>
+        /// The write json permissions
+        /// </summary>
+        private string? writeJsonPermissions;
 
         /// <summary>
         /// The tag start
@@ -68,6 +79,8 @@ namespace PSC.CSharp.Library.APIClient
                 baseEndpoint = baseUrl;
             else
                 throw new ArgumentNullException(nameof(baseUrl));
+
+            writeJsonPermissions = ReadPermissions("PSC.CSharp.Library.APIClient.JsonPermissions");
         }
 
         /// <summary>
@@ -93,6 +106,8 @@ namespace PSC.CSharp.Library.APIClient
                 baseEndpoint = baseUrl;
             else
                 throw new ArgumentNullException(nameof(baseUrl));
+
+            writeJsonPermissions = ReadPermissions("PSC.CSharp.Library.APIClient.JsonPermissions");
         }
 
         #endregion Constructors
@@ -187,7 +202,6 @@ namespace PSC.CSharp.Library.APIClient
             if (string.IsNullOrEmpty(url))
                 return new ApiResponse<TResponse>() { Success = false, ErrorMessage = "Url non valid" };
 
-            HttpResponseMessage responseMessage;
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Patch, url);
 
             string json = JsonSerializer.Serialize(payload, options);
@@ -223,7 +237,6 @@ namespace PSC.CSharp.Library.APIClient
             if (string.IsNullOrEmpty(url))
                 return new ApiResponse<TResponse>() { Success = false, ErrorMessage = "Url non valid" };
 
-            HttpResponseMessage responseMessage;
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
 
             string json = JsonSerializer.Serialize(payload, options);
@@ -254,7 +267,6 @@ namespace PSC.CSharp.Library.APIClient
             if (string.IsNullOrEmpty(url))
                 return new ApiResponse<TResponse>() { Success = false, ErrorMessage = "Url non valid" };
 
-            HttpResponseMessage responseMessage;
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Put, $"{url}");
 
             string json = JsonSerializer.Serialize(payload, options);
@@ -267,6 +279,27 @@ namespace PSC.CSharp.Library.APIClient
         #endregion
 
         #region Common functions
+
+        /// <summary>
+        /// Reads the permissions in the environment variables or appsettings.json
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>System.Nullable&lt;System.String&gt;.</returns>
+        public string? ReadPermissions(string key, string appsettingsFile = "appsettings.json")
+        {
+            if (configuration == null)
+                configuration = new ConfigurationBuilder()
+                                        .SetBasePath(AppContext.BaseDirectory)
+                                        .AddJsonFile(appsettingsFile, optional: true, reloadOnChange: true)
+                                        .Build();
+
+            string? keyValue = Environment.GetEnvironmentVariable(key) ?? configuration[key];
+
+            if (!string.IsNullOrEmpty(keyValue))
+                return keyValue;
+            else
+                return null;
+        }
 
         /// <summary>
         /// Gets the tag.
@@ -286,9 +319,9 @@ namespace PSC.CSharp.Library.APIClient
         /// <param name="end">The end.</param>
         public void SetTag(string start = "", string end = "")
         {
-            if(!string.IsNullOrEmpty(start))
+            if (!string.IsNullOrEmpty(start))
                 _tagStart = start;
-            if(!string.IsNullOrEmpty(end))
+            if (!string.IsNullOrEmpty(end))
                 _tagEnd = end;
         }
 
@@ -308,6 +341,10 @@ namespace PSC.CSharp.Library.APIClient
             HttpResponseMessage responseMessage = null;
 
             Stopwatch stopwatch = Stopwatch.StartNew();
+
+            if (!string.IsNullOrEmpty(writeJsonPermissions) && writeJsonPermissions.Contains(verb))
+                WriteLog(verb, url.ToString(), "Request", null, null, json: request?.Content?.ReadAsStringAsync().Result, 
+                    level: LogLevel.Debug);
 
             try
             {
@@ -377,8 +414,8 @@ namespace PSC.CSharp.Library.APIClient
         /// <param name="statusCode">The status code.</param>
         /// <param name="ex">The ex.</param>
         /// <param name="isDebug">if set to <c>true</c> [is debug].</param>
-        private void WriteLog(string verb, string url, string fnzName, HttpStatusCode statusCode,
-            Exception? ex, bool isDebug = true, string jsonError = null,
+        private void WriteLog(string verb, string url, string fnzName, HttpStatusCode? statusCode,
+            Exception? ex, bool isDebug = true, string json = null,
             string description = null, long? duration = null,
             LogLevel level = LogLevel.Error)
         {
@@ -387,15 +424,15 @@ namespace PSC.CSharp.Library.APIClient
                 string log = isDebug ? GetTag("DBG") : "";
                 log = log + GetTag("HttpVerb", verb) + GetTag("URL", url);
                 log = log + (string.IsNullOrEmpty(fnzName) ? "" : GetTag("Funz", fnzName));
-                log = log + GetTag("HttpCode", ((int)statusCode).ToString());
+                log = log + (statusCode != null ? GetTag("HttpCode", ((int)statusCode).ToString()) : "");
                 if (!string.IsNullOrEmpty(description))
                     log = log + GetTag("Description", description);
                 if (duration != null)
                     log = log + GetTag("Duration", duration.ToString());
                 if (ex != null)
                     log = log + GetTag("Error", ex.Message) + GetTag("ErrSource", ex.Source) + GetTag("ErrStack", ex.StackTrace);
-                if (!string.IsNullOrEmpty(jsonError))
-                    log = log + GetTag("HttpStream", jsonError);
+                if (!string.IsNullOrEmpty(json))
+                    log = log + GetTag("HttpStream", json);
 
                 switch (level)
                 {
