@@ -16,4 +16,10 @@
     <ProjectReference Include="..\PSC.CSharp.Library.DemoAPIClient\PSC.CSharp.Library.DemoAPIClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
